@@ -40,8 +40,8 @@ fun DetailScreen(
         Spacer(modifier = Modifier.height(8.dp))
         if (imageUrl.isNotBlank()) {
             AsyncImage(
-                model = imageUrl,
-                contentDescription = null,
+                model = imageUrl?:"",
+                contentDescription = "Image",
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(200.dp)
