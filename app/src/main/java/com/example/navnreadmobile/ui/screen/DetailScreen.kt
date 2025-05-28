@@ -15,20 +15,18 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.example.navnreadmobile.data.RssItem
 
 
 @Composable
 fun DetailScreen(
-    title: String,
-    description: String,
-    imageUrl: String,
-    link: String,
+    rssItem: RssItem,
     viewModel: RssViewModel
 ) {
     val fullContent by viewModel.articleContent.collectAsState()
     val scrollState = rememberScrollState()
-    LaunchedEffect(link) {
-        viewModel.loadFullArticle(link)
+    LaunchedEffect(rssItem.link) {
+        viewModel.loadFullArticle(rssItem.link)
     }
 
     Column(
@@ -36,11 +34,11 @@ fun DetailScreen(
             .padding(16.dp)
             .verticalScroll(scrollState)
     ) {
-        Text(text = title, style = MaterialTheme.typography.headlineSmall)
+        Text(text = rssItem.title, style = MaterialTheme.typography.headlineSmall)
         Spacer(modifier = Modifier.height(8.dp))
-        if (imageUrl.isNotBlank()) {
+        if (rssItem.imageUrl.isNotBlank()) {
             AsyncImage(
-                model = imageUrl?:"",
+                model = rssItem.imageUrl?:"",
                 contentDescription = "Image",
                 modifier = Modifier
                     .fillMaxWidth()
@@ -48,7 +46,7 @@ fun DetailScreen(
             )
             Spacer(modifier = Modifier.height(8.dp))
         }
-        Text(text = description, style = MaterialTheme.typography.bodyMedium)
+        Text(text = rssItem.description, style = MaterialTheme.typography.bodyMedium)
         Spacer(modifier = Modifier.height(16.dp))
         HorizontalDivider()
         Spacer(modifier = Modifier.height(8.dp))

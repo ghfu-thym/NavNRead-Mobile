@@ -15,6 +15,9 @@ class RssViewModel : ViewModel() {
     private val _rssItems = MutableStateFlow<List<RssItem>>(emptyList())
     val rssItems: StateFlow<List<RssItem>> = _rssItems
 
+    private val _currentCategory = MutableStateFlow("Tin mới nhất")
+    val currentCategory: StateFlow<String> = _currentCategory
+
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
@@ -24,7 +27,8 @@ class RssViewModel : ViewModel() {
     private val _articleContent = MutableStateFlow<String>("")
     val articleContent: StateFlow<String> get() = _articleContent
 
-    fun loadNews(url:String) {
+    fun loadNews(url:String, category: String? = null) {
+        category?.let{ _currentCategory.value = it}
         viewModelScope.launch(Dispatchers.IO) {
             _isLoading.value = true
             _errorMessage.value = null

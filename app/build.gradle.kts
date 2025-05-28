@@ -71,6 +71,8 @@ dependencies {
 
     // để xử lý HTML trong description
     implementation(libs.jsoup)
+    // font
+    implementation(libs.androidx.ui.text.google.fonts)
 
 
 

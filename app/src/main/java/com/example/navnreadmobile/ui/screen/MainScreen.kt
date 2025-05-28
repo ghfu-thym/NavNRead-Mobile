@@ -22,6 +22,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
@@ -46,9 +47,11 @@ import com.example.navnreadmobile.utils.Constants
 @Composable
 fun MainScreen(navController: NavController, viewModel: RssViewModel) {
     val news by viewModel.rssItems.collectAsState()
+    val currentCategory by viewModel.currentCategory.collectAsState()
 
     LaunchedEffect(Unit) {
-        viewModel.loadNews("https://vnexpress.net/rss/tin-moi-nhat.rss")
+        if(news.isEmpty())
+        viewModel.loadNews("https://vnexpress.net/rss/tin-moi-nhat.rss", "Tin mới nhất")
     }
     Column(
         modifier = Modifier
@@ -57,9 +60,11 @@ fun MainScreen(navController: NavController, viewModel: RssViewModel) {
     ){
     CategoryBar(
         viewModel = viewModel,
+        currentCategory = currentCategory,
         onCategoryClick = {
             categoryKey ->
-            viewModel.loadNews(Constants.CATEGORY_MAP[categoryKey] ?: "")
+            val url  = Constants.CATEGORY_MAP[categoryKey]?: ""
+            viewModel.loadNews(url,categoryKey)
         }
     )
     Spacer(modifier = Modifier.padding(8.dp))
@@ -71,22 +76,6 @@ fun MainScreen(navController: NavController, viewModel: RssViewModel) {
             .padding(8.dp)
     ) {
         items(items = news) { item ->
-//            Text(
-//                text = item.title,
-//                modifier = Modifier
-//                    .fillMaxWidth()
-//                    .clickable {
-//                        navController.navigate(
-//                            "detail/" +
-//                                    Uri.encode(item.title) + "/" +
-//                                    Uri.encode(item.description) + "/" +
-//                                    Uri.encode(item.imageUrl) + "/" +
-//                                    Uri.encode(item.link)
-//                        )
-//                    }
-//                    .padding(16.dp),
-//                style = MaterialTheme.typography.titleMedium
-//            )
             ArticleHeadline(
                 rssItem = item,
                 navController = navController
@@ -100,7 +89,8 @@ fun MainScreen(navController: NavController, viewModel: RssViewModel) {
 @Composable
 fun CategoryBar(
     viewModel: RssViewModel,
-    onCategoryClick: (String) -> Unit = {}
+    onCategoryClick: (String) -> Unit = {},
+    currentCategory: String
 ){
     val categoryList: List<String> = Constants.CATEGORY_MAP.keys.toList()
     LazyRow(
@@ -115,7 +105,14 @@ fun CategoryBar(
             Button(
                 onClick = {
                     onCategoryClick(item)
-                }
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if(item == currentCategory) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.secondary
+                    },
+                )
             ) {
                 Text(
                     text = item
