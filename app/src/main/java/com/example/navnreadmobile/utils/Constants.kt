@@ -17,4 +17,5 @@ object Constants {
         "Đời sống" to "https://vnexpress.net/rss/gia-dinh.rss",
         "Công nghệ" to "https://vnexpress.net/rss/khoa-hoc-cong-nghe.rss",
     )
+    const val SEARCH_URL = "https://timkiem.vnexpress.net/?q="
 }

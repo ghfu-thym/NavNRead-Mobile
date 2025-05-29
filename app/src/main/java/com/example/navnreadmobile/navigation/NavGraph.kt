@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -24,6 +25,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.navnreadmobile.data.RssItem
+import com.example.navnreadmobile.ui.component.BottomNavBar
+import com.example.navnreadmobile.ui.screen.SearchScreen
+import com.example.navnreadmobile.ui.screen.SettingScreen
+import com.example.navnreadmobile.ui.screen.VoiceCommandScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,7 +47,7 @@ fun AppNavGraph(navController: NavHostController, viewModel: RssViewModel) {
                     )
                 },
                 navigationIcon = {
-                    if (currentRoute != Navigation.MAIN_SCREEN){
+                    if (currentRoute == Navigation.DETAIL_SCREEN){
                         IconButton(
                             onClick = {
                                 navController.popBackStack()
@@ -61,6 +66,11 @@ fun AppNavGraph(navController: NavHostController, viewModel: RssViewModel) {
                     }
                 }
             )
+        },
+        bottomBar = {
+
+                BottomNavBar(navController,currentRoute)
+
         }
     ) { innerPadding ->
         NavHost(
@@ -70,6 +80,18 @@ fun AppNavGraph(navController: NavHostController, viewModel: RssViewModel) {
         ){
             composable(Navigation.MAIN_SCREEN) {
                 MainScreen(navController, viewModel)
+            }
+
+            composable(Navigation.SEARCH_SCREEN){
+                SearchScreen(navController)
+            }
+
+            composable(Navigation.SETTINGS_SCREEN){
+                SettingScreen(navController)
+            }
+
+            composable(Navigation.VOICE_COMMAND_SCREEN){
+                VoiceCommandScreen(navController)
             }
 
             composable(
