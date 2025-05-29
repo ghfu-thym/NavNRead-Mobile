@@ -1,6 +1,8 @@
 package com.example.navnreadmobile.network
 
 import com.example.navnreadmobile.data.RssItem
+import com.example.navnreadmobile.data.SearchItem
+import com.example.navnreadmobile.utils.Constants
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
@@ -35,7 +37,7 @@ class RssRepository {
 
             val rawDescription = node.getElementsByTagName("description").item(0).textContent
             val docDescription = Jsoup.parse(rawDescription)
-            val image = docDescription.select("img").firstOrNull()?.attr("src") ?: ""
+            val image = docDescription.select("img").firstOrNull()?.attr("src") ?: "https://via.placeholder.com/300x180?text=No+Image"
             val descText = docDescription.text()
 
             result.add(
@@ -48,6 +50,12 @@ class RssRepository {
                 )
             )
         }
+        result
+    }
+
+    suspend fun fetchSearchResults(query: String): List<SearchItem> = withContext(Dispatchers.IO){
+        val result = mutableListOf<SearchItem>()
+        var url = Constants.SEARCH_URL+query.replace(" ","%20")
         result
     }
 }

@@ -83,7 +83,7 @@ fun AppNavGraph(navController: NavHostController, viewModel: RssViewModel) {
             }
 
             composable(Navigation.SEARCH_SCREEN){
-                SearchScreen(navController)
+                SearchScreen(navController, viewModel)
             }
 
             composable(Navigation.SETTINGS_SCREEN){

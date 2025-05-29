@@ -63,25 +63,6 @@ fun BottomNavBar (
             }
         )
 
-        NavigationBarItem(
-            icon = {
-                Icon(
-                    Icons.Default.Settings,
-                    contentDescription = "Cài đặt",
-                )
-            },
-            label = {
-                Text(text = "Cài đặt")
-            },
-            selected = currentRoute == Navigation.SETTINGS_SCREEN,
-            onClick = {
-                if(currentRoute != Navigation.SETTINGS_SCREEN){
-                    navController.navigate(Navigation.SETTINGS_SCREEN){
-                        popUpTo(Navigation.MAIN_SCREEN)
-                    }
-                }
-            }
-        )
 
         NavigationBarItem(
             icon = {
@@ -102,5 +83,26 @@ fun BottomNavBar (
                 }
             }
         )
+
+        NavigationBarItem(
+            icon = {
+                Icon(
+                    Icons.Default.Settings,
+                    contentDescription = "Cài đặt",
+                )
+            },
+            label = {
+                Text(text = "Cài đặt")
+            },
+            selected = currentRoute == Navigation.SETTINGS_SCREEN,
+            onClick = {
+                if(currentRoute != Navigation.SETTINGS_SCREEN){
+                    navController.navigate(Navigation.SETTINGS_SCREEN){
+                        popUpTo(Navigation.MAIN_SCREEN)
+                    }
+                }
+            }
+        )
+
     }
 }
