@@ -2,7 +2,7 @@ package com.example.navnreadmobile.network
 
 import com.example.navnreadmobile.data.RssItem
 import com.example.navnreadmobile.data.SearchItem
-import com.example.navnreadmobile.utils.Constants
+import com.example.navnreadmobile.utils.ConstantsURL
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
@@ -55,7 +55,7 @@ class RssRepository {
 
     suspend fun fetchSearchResults(query: String): List<SearchItem> = withContext(Dispatchers.IO){
         val result = mutableListOf<SearchItem>()
-        var url = Constants.SEARCH_URL+query.replace(" ","%20")
+        var url = ConstantsURL.SEARCH_URL+query.replace(" ","%20")
         result
     }
 }

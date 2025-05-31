@@ -1,6 +1,7 @@
 [versions]
 agp = "8.6.0"
 coilCompose = "2.4.0"
+generativeai = "0.9.0"
 jacksonDataformatXml = "2.15.2"
 jsoup = "1.15.4"
 kotlin = "1.9.0"
@@ -28,6 +29,7 @@ androidx-lifecycle-viewmodel-ktx = { module = "androidx.lifecycle:lifecycle-view
 androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
 androidx-ui-text-google-fonts = { module = "androidx.compose.ui:ui-text-google-fonts", version.ref = "uiTextGoogleFonts" }
 coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose" }
+generativeai = { module = "com.google.ai.client.generativeai:generativeai", version.ref = "generativeai" }
 jackson-dataformat-xml = { module = "com.fasterxml.jackson.dataformat:jackson-dataformat-xml", version.ref = "jacksonDataformatXml" }
 jetbrains-kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutinesCoreVersion" }
 jsoup = { module = "org.jsoup:jsoup", version.ref = "jsoup" }

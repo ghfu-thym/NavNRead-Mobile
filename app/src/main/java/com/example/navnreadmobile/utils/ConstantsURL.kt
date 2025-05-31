@@ -1,7 +1,6 @@
 package com.example.navnreadmobile.utils
 
-object Constants {
-    const val HOME_PAGE = "https://vnexpress.net/rss/tin-moi-nhat.rss"
+object ConstantsURL {
     val CATEGORY_MAP: Map<String, String> = mapOf(
         "Tin mới nhất" to "https://vnexpress.net/rss/tin-moi-nhat.rss",
         "Thời sự" to "https://vnexpress.net/rss/thoi-su.rss",
@@ -18,4 +17,24 @@ object Constants {
         "Công nghệ" to "https://vnexpress.net/rss/khoa-hoc-cong-nghe.rss",
     )
     const val SEARCH_URL = "https://timkiem.vnexpress.net/?q="
+
+
+}
+
+object VoiceCommands {
+    const val NEWEST_NEWS = "tin mới nhất"
+    const val SEARCH_NEWS = "tìm kiếm"
+    const val CATEGORY_MODE = "chủ đề"
+    const val READ_ALOUD = "đọc tin"
+    const val STOP_READING = "dừng đọc"
+    const val RESUME_READING = "đọc tiếp"
+    const val REFRESH_NEWS = "làm mới tin tức"
+    const val NEXT_NEWS = "tin tiếp theo"
+    const val PREVIOUS_NEWS = "tin trước"
+}
+
+enum class Modes {
+    CATEGORY,
+    SEARCH,
+    NEWEST_NEWS,
 }

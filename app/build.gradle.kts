@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -18,6 +20,13 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+        val properties = Properties()
+        if (rootProject.file("local.properties").exists()) {
+            properties.load(rootProject.file("local.properties").inputStream())
+        }
+
+        buildConfigField("String", "GEMINI_API_KEY", "\"${properties.getProperty("GEMINI_API_KEY", "")}\"")
+
     }
 
     buildTypes {
@@ -38,6 +47,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.1"
@@ -73,7 +83,8 @@ dependencies {
     implementation(libs.jsoup)
     // font
     implementation(libs.androidx.ui.text.google.fonts)
-
+    // gen AI
+    implementation(libs.generativeai)
 
 
     testImplementation(libs.junit)

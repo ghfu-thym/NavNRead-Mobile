@@ -2,9 +2,8 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.navnreadmobile.data.RssItem
-import com.example.navnreadmobile.data.SearchItem
 import com.example.navnreadmobile.network.RssRepository
-import com.example.navnreadmobile.utils.Constants
+import com.example.navnreadmobile.utils.ConstantsURL
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -76,7 +75,7 @@ class RssViewModel : ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 _searchResults.value = emptyList() // Reset search results
-                val url = Constants.SEARCH_URL + query
+                val url = ConstantsURL.SEARCH_URL + query
                 val document = Jsoup.connect(url).get()
 
                 val articles = document.select("article.item-news")

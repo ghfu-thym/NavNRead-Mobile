@@ -91,7 +91,7 @@ fun AppNavGraph(navController: NavHostController, viewModel: RssViewModel) {
             }
 
             composable(Navigation.VOICE_COMMAND_SCREEN){
-                VoiceCommandScreen(navController)
+                VoiceCommandScreen(navController,viewModel)
             }
 
             composable(
