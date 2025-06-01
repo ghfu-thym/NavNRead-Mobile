@@ -46,6 +46,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import com.example.navnreadmobile.utils.CommandProcessor
 import com.example.navnreadmobile.utils.Modes
+import com.example.navnreadmobile.utils.ResponseType
 import com.example.navnreadmobile.utils.SpeechManager
 
 @Composable
@@ -69,6 +70,9 @@ fun VoiceCommandScreen(
     val articleSummary by viewModel.articleSummary.collectAsState("")
     val scrollState = rememberScrollState()
 
+    // Để hiển thị phản hồi từ lệnh
+    var feedbackMessage by remember { mutableStateOf("") }
+
     // Mở mic
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -82,12 +86,28 @@ fun VoiceCommandScreen(
                     recordedText = result
                     isListening = false
 
-                    // Xử lý lệnh chuyển chế độ
-                    val feedbackMessage = commandProcessor.processCommand(recordedText, mode = mode, newsIndex,
-                        searchIndex, news, searchResults, viewModel)
+                    // Xử lý lệnh và nhận cả phản hồi và loại phản hồi
+                    val (message, responseType) = commandProcessor.processCommand(
+                        recordedText,
+                        mode = mode,
+                        newsIndex,
+                        searchIndex,
+                        news,
+                        searchResults,
+                        viewModel
+                    )
 
-                    //speechManager.speakText(feedbackMessage)
+                    // Cập nhật thông báo để hiển thị trên UI
+                    feedbackMessage = message
 
+                    // Chỉ đọc lại thông báo nếu là lỗi hoặc thông báo cần đọc
+                    when (responseType) {
+                        ResponseType.Error -> speechManager.speakText(message)
+                        ResponseType.Normal -> speechManager.speakText(message)
+                        ResponseType.AlreadySpoken -> {
+                            // Không cần đọc lại, đã được đọc trong CommandProcessor
+                        }
+                    }
 
                     Log.d(mode.value.toString(), "Mode changed to: ${mode.value}")
                 }
@@ -172,6 +192,17 @@ fun VoiceCommandScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
             }
+
+            // Hiển thị thông báo phản hồi
+            if (feedbackMessage.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = feedbackMessage,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.secondary
+                )
+            }
+
             Column(
                 modifier = Modifier
                     .padding(top = 16.dp, start = 8.dp, end = 8.dp)

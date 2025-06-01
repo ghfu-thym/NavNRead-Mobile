@@ -14,6 +14,18 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+// Thêm sealed class để chỉ định loại phản hồi
+sealed class ResponseType {
+    // Phản hồi đã được đọc bởi CommandProcessor, không cần đọc lại
+    object AlreadySpoken : ResponseType()
+
+    // Phản hồi là lỗi, cần được đọc bởi VoiceCommandScreen
+    object Error : ResponseType()
+
+    // Phản hồi thông thường, cần được đọc bởi VoiceCommandScreen
+    object Normal : ResponseType()
+}
+
 class CommandProcessor(private val context: Context) {
     private val summarizer = Summarize()
     private val scope = CoroutineScope(Dispatchers.Main)
@@ -22,6 +34,7 @@ class CommandProcessor(private val context: Context) {
     // Kiểm tra xem có đang xử lý đọc tin nào không
     private var isProcessingReadNews = false
 
+    // Thay đổi kiểu trả về của hàm processCommand
     fun processCommand(
         command: String,
         mode: MutableState<Modes>,
@@ -30,7 +43,7 @@ class CommandProcessor(private val context: Context) {
         newsList: List<RssItem>,
         searchResults: List<RssItem>,
         rssViewModel: RssViewModel
-    ): String {
+    ): Pair<String, ResponseType> {
         // Convert to lowercase to make matching case-insensitive
         val lowercaseCommand = command.lowercase()
 
@@ -39,24 +52,24 @@ class CommandProcessor(private val context: Context) {
             when {
                 lowercaseCommand.contains("tin mới nhất") -> {
                     mode.value = Modes.NEWEST_NEWS
-                    return "Đã chuyển sang chế độ tin mới nhất"
+                    return Pair("Đã chuyển sang chế độ tin mới nhất", ResponseType.Normal)
                 }
                 lowercaseCommand.contains("tìm kiếm") -> {
                     mode.value = Modes.SEARCH
-                    return "Đã chuyển sang chế độ tìm kiếm"
+                    return Pair("Đã chuyển sang chế độ tìm kiếm", ResponseType.Normal)
                 }
                 lowercaseCommand.contains("chủ đề") -> {
                     mode.value = Modes.CATEGORY
-                    return "Đã chuyển sang chế độ đọc tin theo chủ đề"
+                    return Pair("Đã chuyển sang chế độ đọc tin theo chủ đề", ResponseType.Normal)
                 }
-                else -> return "Không nhận diện được chế độ yêu cầu"
+                else -> return Pair("Không nhận diện được chế độ yêu cầu", ResponseType.Error)
             }
         }
         // Xử lý lệnh đọc tin
         else if (lowercaseCommand.contains("đọc tin")) {
             // Nếu đang xử lý đọc tin thì bỏ qua yêu cầu mới
             if (isProcessingReadNews) {
-                return "Đang xử lý yêu cầu đọc tin, vui lòng đợi"
+                return Pair("Đang xử lý yêu cầu đọc tin, vui lòng đợi", ResponseType.Normal)
             }
             return processReadNewsCommand(mode.value, newsList, newsIndex, searchResults, searchIndex, rssViewModel)
         }
@@ -71,7 +84,7 @@ class CommandProcessor(private val context: Context) {
             return processPreviousNewsCommand(mode.value, newsList, newsIndex, searchResults, searchIndex)
         }
 
-        return "Không nhận diện được lệnh"
+        return Pair("Không nhận diện được lệnh", ResponseType.Normal)
     }
 
     private fun processReadNewsCommand(
@@ -81,11 +94,11 @@ class CommandProcessor(private val context: Context) {
         searchResults: List<RssItem>,
         searchIndex: MutableIntState,
         rssViewModel: RssViewModel
-    ): String {
+    ): Pair<String, ResponseType> {
         when (mode) {
             Modes.NEWEST_NEWS -> {
                 if (newsList.isEmpty() || newsIndex.intValue >= newsList.size) {
-                    return "Không có tin tức để đọc"
+                    return Pair("Không có tin tức để đọc", ResponseType.Error)
                 }
 
                 val currentNews = newsList[newsIndex.intValue]
@@ -97,6 +110,9 @@ class CommandProcessor(private val context: Context) {
 
                 // Chỉ trả về thông báo, không đọc
                 val initialResponse = "Đang tải và tóm tắt tin: ${currentNews.title}"
+
+                // Đọc thông báo ban đầu (sẽ không đọc lại ở VoiceCommandScreen)
+                speechManager.speakText(initialResponse)
 
                 // Sử dụng coroutine để xử lý tác vụ bất đồng bộ
                 scope.launch {
@@ -126,7 +142,7 @@ class CommandProcessor(private val context: Context) {
                             // Tóm tắt nội dung bằng AI
                             try {
                                 // Đọc thông báo đang tải
-                                speechManager.speakText("Đang tóm tắt bài viết")
+                                //speechManager.speakText("Đang tóm tắt bài viết")
 
                                 val summary = withContext(Dispatchers.IO) {
                                     summarizer.summarize(articleContent)
@@ -154,12 +170,11 @@ class CommandProcessor(private val context: Context) {
                     }
                 }
 
-                return initialResponse
+                return Pair(initialResponse, ResponseType.AlreadySpoken)
             }
             Modes.SEARCH -> {
-                // Xử lý đọc tin trong chế độ tìm kiếm
                 if (searchResults.isEmpty() || searchIndex.intValue >= searchResults.size) {
-                    return "Không có kết quả tìm kiếm để đọc"
+                    return Pair("Không có kết quả tìm kiếm để đọc", ResponseType.Error)
                 }
 
                 // Đánh dấu đang xử lý đọc tin
@@ -170,6 +185,9 @@ class CommandProcessor(private val context: Context) {
 
                 // Chỉ trả về thông báo, không đọc
                 val initialResponse = "Đang tải và tóm tắt tin: ${currentSearch.title}"
+
+                // Đọc thông báo ban đầu (sẽ không đọc lại ở VoiceCommandScreen)
+                speechManager.speakText(initialResponse)
 
                 // Sử dụng coroutine để xử lý tác vụ bất đồng bộ
                 scope.launch {
@@ -226,9 +244,9 @@ class CommandProcessor(private val context: Context) {
                     }
                 }
 
-                return initialResponse
+                return Pair(initialResponse, ResponseType.AlreadySpoken)
             }
-            else -> return "Chức năng đọc tin trong chế độ này chưa được hỗ trợ"
+            else -> return Pair("Chức năng đọc tin trong chế độ này chưa được hỗ trợ", ResponseType.Error)
         }
     }
 
@@ -238,42 +256,42 @@ class CommandProcessor(private val context: Context) {
         newsIndex: MutableIntState,
         searchResults: List<RssItem>,
         searchIndex: MutableIntState
-    ): String {
+    ): Pair<String, ResponseType> {
         when (mode) {
             Modes.NEWEST_NEWS -> {
                 if (newsList.isEmpty()) {
-                    return "Không có tin tức nào"
+                    return Pair("Không có tin tức nào", ResponseType.Error)
                 }
 
                 // Tăng chỉ số và đảm bảo không vượt quá giới hạn
                 if (newsIndex.intValue < newsList.size - 1) {
                     newsIndex.intValue++
                 } else {
-                    return "Đã đến tin cuối cùng"
+                    return Pair("Đã đến tin cuối cùng", ResponseType.Error)
                 }
 
                 val currentNews = newsList[newsIndex.intValue]
                 val response = "Tin tiếp theo: ${currentNews.title}"
                 speechManager.speakText(response)
-                return response
+                return Pair(response, ResponseType.AlreadySpoken)
             }
             Modes.SEARCH -> {
                 if (searchResults.isEmpty()) {
-                    return "Không có kết quả tìm kiếm nào"
+                    return Pair("Không có kết quả tìm kiếm nào", ResponseType.Error)
                 }
 
                 if (searchIndex.intValue < searchResults.size - 1) {
                     searchIndex.intValue++
                 } else {
-                    return "Đã đến kết quả tìm kiếm cuối cùng"
+                    return Pair("Đã đến kết quả tìm kiếm cuối cùng", ResponseType.Error)
                 }
 
                 val currentResult = searchResults[searchIndex.intValue]
                 val response = "Kết quả tìm kiếm tiếp theo: ${currentResult.title}"
                 speechManager.speakText(response)
-                return response
+                return Pair(response, ResponseType.AlreadySpoken)
             }
-            else -> return "Chức năng chuyển tin trong chế độ này chưa được hỗ trợ"
+            else -> return Pair("Chức năng chuyển tin trong chế độ này chưa được hỗ trợ", ResponseType.Error)
         }
     }
 
@@ -283,42 +301,42 @@ class CommandProcessor(private val context: Context) {
         newsIndex: MutableIntState,
         searchResults: List<RssItem>,
         searchIndex: MutableIntState
-    ): String {
+    ): Pair<String, ResponseType> {
         when (mode) {
             Modes.NEWEST_NEWS -> {
                 if (newsList.isEmpty()) {
-                    return "Không có tin tức nào"
+                    return Pair("Không có tin tức nào", ResponseType.Error)
                 }
 
                 // Giảm chỉ số và đảm bảo không âm
                 if (newsIndex.intValue > 0) {
                     newsIndex.intValue--
                 } else {
-                    return "Đã đến tin đầu tiên"
+                    return Pair("Đã đến tin đầu tiên", ResponseType.Error)
                 }
 
                 val currentNews = newsList[newsIndex.intValue]
                 val response = "Tin trước đó: ${currentNews.title}"
                 speechManager.speakText(response)
-                return response
+                return Pair(response, ResponseType.AlreadySpoken)
             }
             Modes.SEARCH -> {
                 if (searchResults.isEmpty()) {
-                    return "Không có kết quả tìm kiếm nào"
+                    return Pair("Không có kết quả tìm kiếm nào", ResponseType.Error)
                 }
 
                 if (searchIndex.intValue > 0) {
                     searchIndex.intValue--
                 } else {
-                    return "Đã đến kết quả tìm kiếm đầu tiên"
+                    return Pair("Đã đến kết quả tìm kiếm đầu tiên", ResponseType.Error)
                 }
 
                 val currentResult = searchResults[searchIndex.intValue]
                 val response = "Kết quả tìm kiếm trước đó: ${currentResult.title}"
                 speechManager.speakText(response)
-                return response
+                return Pair(response, ResponseType.AlreadySpoken)
             }
-            else -> return "Chức năng quay lại tin trước trong chế độ này chưa được hỗ trợ"
+            else -> return Pair("Chức năng quay lại tin trước trong chế độ này chưa được hỗ trợ", ResponseType.Error)
         }
     }
 }
