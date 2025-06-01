@@ -31,6 +31,9 @@ class RssViewModel : ViewModel() {
     private val _articleContent = MutableStateFlow<String>("")
     val articleContent: StateFlow<String> get() = _articleContent
 
+    private val _articleSummary = MutableStateFlow<String>("")
+    val articleSummary: StateFlow<String> get() = _articleSummary
+
     private val _searchResults = MutableStateFlow<List<RssItem>>(emptyList())
     val searchResults: StateFlow<List<RssItem>> = _searchResults
 
@@ -48,6 +51,7 @@ class RssViewModel : ViewModel() {
             }
         }
     }
+
     fun loadFullArticle(url: String) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
@@ -69,6 +73,14 @@ class RssViewModel : ViewModel() {
                 _articleContent.value = "Lỗi tải bài báo: ${e.message}"
             }
         }
+    }
+
+    fun updateSummary(summary: String) {
+        _articleSummary.value = summary
+    }
+
+    fun clearSummary() {
+        _articleSummary.value = ""
     }
 
     fun loadSearchResults(query: String) {
