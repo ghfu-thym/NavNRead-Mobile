@@ -83,10 +83,14 @@ class RssViewModel : ViewModel() {
         _articleSummary.value = ""
     }
 
+    fun clearSearchResults() {
+        _searchResults.value = emptyList()
+    }
+
     fun loadSearchResults(query: String) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                _searchResults.value = emptyList() // Reset search results
+                _searchResults.value = emptyList() // Clear previous results
                 val url = ConstantsURL.SEARCH_URL + query
                 val document = Jsoup.connect(url).get()
 

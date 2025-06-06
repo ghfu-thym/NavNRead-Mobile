@@ -44,7 +44,7 @@ class CommandProcessor(private val context: Context) {
         searchResults: List<RssItem>,
         rssViewModel: RssViewModel
     ): Pair<String, ResponseType> {
-        // Convert to lowercase to make matching case-insensitive
+        // Chuyển đổi lệnh về chữ thường để so sánh
         val lowercaseCommand = command.lowercase()
 
         // Xử lý lệnh chuyển chế độ
@@ -54,14 +54,17 @@ class CommandProcessor(private val context: Context) {
                     mode.value = Modes.NEWEST_NEWS
                     return Pair("Đã chuyển sang chế độ tin mới nhất", ResponseType.Normal)
                 }
+
                 lowercaseCommand.contains("tìm kiếm") -> {
                     mode.value = Modes.SEARCH
                     return Pair("Đã chuyển sang chế độ tìm kiếm", ResponseType.Normal)
                 }
+
                 lowercaseCommand.contains("chủ đề") -> {
                     mode.value = Modes.CATEGORY
                     return Pair("Đã chuyển sang chế độ đọc tin theo chủ đề", ResponseType.Normal)
                 }
+
                 else -> return Pair("Không nhận diện được chế độ yêu cầu", ResponseType.Error)
             }
         }
@@ -71,20 +74,84 @@ class CommandProcessor(private val context: Context) {
             if (isProcessingReadNews) {
                 return Pair("Đang xử lý yêu cầu đọc tin, vui lòng đợi", ResponseType.Normal)
             }
-            return processReadNewsCommand(mode.value, newsList, newsIndex, searchResults, searchIndex, rssViewModel)
+            return processReadNewsCommand(
+                mode.value,
+                newsList,
+                newsIndex,
+                searchResults,
+                searchIndex,
+                rssViewModel
+            )
+        } else if(lowercaseCommand.contains("dừng đọc tin") ) {
+            // Nếu đang xử lý đọc tin thì dừng lại
+            if (isProcessingReadNews) {
+                isProcessingReadNews = false
+                speechManager.speakText("Đã dừng đọc tin")
+                return Pair("Đã dừng đọc tin", ResponseType.Normal)
+            } else {
+                return Pair("Không có tin nào đang được đọc", ResponseType.Normal)
+            }
+
         }
         // Xử lý lệnh chuyển tin
         else if (lowercaseCommand.contains("tin tiếp theo") || lowercaseCommand.contains("tin kế tiếp")) {
             // Reset lại trạng thái xử lý đọc tin
             isProcessingReadNews = false
-            return processNextNewsCommand(mode.value, newsList, newsIndex, searchResults, searchIndex)
+            return processNextNewsCommand(
+                mode.value,
+                newsList,
+                newsIndex,
+                searchResults,
+                searchIndex
+            )
         } else if (lowercaseCommand.contains("tin trước") || lowercaseCommand.contains("tin trước đó")) {
             // Reset lại trạng thái xử lý đọc tin
             isProcessingReadNews = false
-            return processPreviousNewsCommand(mode.value, newsList, newsIndex, searchResults, searchIndex)
+            return processPreviousNewsCommand(
+                mode.value,
+                newsList,
+                newsIndex,
+                searchResults,
+                searchIndex
+            )
+        } else if (mode.value == Modes.SEARCH) {
+            isProcessingReadNews = false
+            return processSearchCommand(lowercaseCommand, rssViewModel, searchResults, searchIndex)
         }
 
         return Pair("Không nhận diện được lệnh", ResponseType.Normal)
+    }
+
+    private fun processSearchCommand(
+        query: String,
+        rssViewModel: RssViewModel,
+        searchResults: List<RssItem>,
+        searchIndex: MutableIntState
+    ): Pair<String, ResponseType> {
+
+        scope.launch {
+            try {
+                speechManager.speakText("Đang tìm kiếm: $query")
+                rssViewModel.loadSearchResults(query)
+
+                delay(2000)
+
+                val result = rssViewModel.searchResults.value
+                if(result.isNotEmpty()){
+                    val title = result[0].title
+                    speechManager.speakText("Kết quả tìm kiếm: $title")
+                } else {
+                    speechManager.speakText("Không tìm thấy kết quả nào cho từ khóa: $query")
+                }
+            } catch (e: Exception) {
+                Log.e("CommandProcessor", "Error loading search results: ${e.message}")
+                speechManager.speakText("Không thể tìm kiếm tin tức. Vui lòng thử lại sau.")
+            }
+        }
+
+
+        return Pair("Đang tìm kiếm: $query", ResponseType.AlreadySpoken)
+
     }
 
     private fun processReadNewsCommand(
@@ -135,7 +202,10 @@ class CommandProcessor(private val context: Context) {
                                 break // Đã tải thành công
                             }
 
-                            Log.d("CommandProcessor", "Đang đợi nội dung bài báo, lần thử $attempts")
+                            Log.d(
+                                "CommandProcessor",
+                                "Đang đợi nội dung bài báo, lần thử $attempts"
+                            )
                         }
 
                         if (articleContent.isNotEmpty() && !articleContent.startsWith("Lỗi tải bài báo")) {
@@ -172,6 +242,7 @@ class CommandProcessor(private val context: Context) {
 
                 return Pair(initialResponse, ResponseType.AlreadySpoken)
             }
+
             Modes.SEARCH -> {
                 if (searchResults.isEmpty() || searchIndex.intValue >= searchResults.size) {
                     return Pair("Không có kết quả tìm kiếm để đọc", ResponseType.Error)
@@ -210,14 +281,17 @@ class CommandProcessor(private val context: Context) {
                                 break // Đã tải thành công
                             }
 
-                            Log.d("CommandProcessor", "Đang đợi nội dung bài báo, lần thử $attempts")
+                            Log.d(
+                                "CommandProcessor",
+                                "Đang đợi nội dung bài báo, lần thử $attempts"
+                            )
                         }
 
                         if (articleContent.isNotEmpty() && !articleContent.startsWith("Lỗi tải bài báo")) {
                             // Tóm tắt nội dung bằng AI
                             try {
                                 // Đọc thông báo đang tải
-                                speechManager.speakText("Đang tóm tắt bài viết")
+                                //speechManager.speakText("Đang tóm tắt bài viết")
 
                                 val summary = withContext(Dispatchers.IO) {
                                     summarizer.summarize(articleContent)
@@ -246,7 +320,11 @@ class CommandProcessor(private val context: Context) {
 
                 return Pair(initialResponse, ResponseType.AlreadySpoken)
             }
-            else -> return Pair("Chức năng đọc tin trong chế độ này chưa được hỗ trợ", ResponseType.Error)
+
+            else -> return Pair(
+                "Chức năng đọc tin trong chế độ này chưa được hỗ trợ",
+                ResponseType.Error
+            )
         }
     }
 
@@ -275,6 +353,7 @@ class CommandProcessor(private val context: Context) {
                 speechManager.speakText(response)
                 return Pair(response, ResponseType.AlreadySpoken)
             }
+
             Modes.SEARCH -> {
                 if (searchResults.isEmpty()) {
                     return Pair("Không có kết quả tìm kiếm nào", ResponseType.Error)
@@ -291,7 +370,11 @@ class CommandProcessor(private val context: Context) {
                 speechManager.speakText(response)
                 return Pair(response, ResponseType.AlreadySpoken)
             }
-            else -> return Pair("Chức năng chuyển tin trong chế độ này chưa được hỗ trợ", ResponseType.Error)
+
+            else -> return Pair(
+                "Chức năng chuyển tin trong chế độ này chưa được hỗ trợ",
+                ResponseType.Error
+            )
         }
     }
 
@@ -320,6 +403,7 @@ class CommandProcessor(private val context: Context) {
                 speechManager.speakText(response)
                 return Pair(response, ResponseType.AlreadySpoken)
             }
+
             Modes.SEARCH -> {
                 if (searchResults.isEmpty()) {
                     return Pair("Không có kết quả tìm kiếm nào", ResponseType.Error)
@@ -336,7 +420,11 @@ class CommandProcessor(private val context: Context) {
                 speechManager.speakText(response)
                 return Pair(response, ResponseType.AlreadySpoken)
             }
-            else -> return Pair("Chức năng quay lại tin trước trong chế độ này chưa được hỗ trợ", ResponseType.Error)
+
+            else -> return Pair(
+                "Chức năng quay lại tin trước trong chế độ này chưa được hỗ trợ",
+                ResponseType.Error
+            )
         }
     }
 }

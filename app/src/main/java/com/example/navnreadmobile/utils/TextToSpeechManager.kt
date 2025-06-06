@@ -55,6 +55,16 @@ class TextToSpeechManager(private val context: Context) {
         }
     }
 
+    fun stopSpeaking() {
+        Log.d(TAG, "Stopping TTS speech")
+        if (isInitialized && textToSpeech != null) {
+            textToSpeech?.stop()
+            Log.d(TAG, "TTS speech stopped")
+        } else {
+            Log.e(TAG, "Cannot stop speech - TTS not initialized")
+        }
+    }
+
     fun speakText(text: String) {
         Log.d(TAG, "Speaking text: '$text', initialized: $isInitialized")
 

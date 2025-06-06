@@ -129,6 +129,13 @@ fun VoiceCommandScreen(
         viewModel.clearSummary()
     }
 
+    LaunchedEffect(mode.value) {
+        if (mode.value ==Modes.SEARCH){
+            viewModel.clearSearchResults()
+
+        }
+    }
+
     DisposableEffect(Unit) {
         onDispose {
             speechRecognizer?.stopListening()
