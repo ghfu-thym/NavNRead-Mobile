@@ -86,7 +86,7 @@ class CommandProcessor(private val context: Context) {
             // Nếu đang xử lý đọc tin thì dừng lại
             if (isProcessingReadNews) {
                 isProcessingReadNews = false
-                speechManager.speakText("Đã dừng đọc tin")
+                speechManager.stopSpeaking()
                 return Pair("Đã dừng đọc tin", ResponseType.Normal)
             } else {
                 return Pair("Không có tin nào đang được đọc", ResponseType.Normal)

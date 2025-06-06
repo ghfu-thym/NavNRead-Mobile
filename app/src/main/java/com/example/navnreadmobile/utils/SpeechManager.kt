@@ -34,6 +34,10 @@ class SpeechManager(context: Context) {
         textToSpeechManager.speakText(text)
     }
 
+    fun stopSpeaking() {
+        textToSpeechManager.stopSpeaking()
+    }
+
     /**
      * Giải phóng tài nguyên
      */
